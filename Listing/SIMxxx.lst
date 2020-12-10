@@ -1,0 +1,127 @@
+C51 COMPILER V9.54   SIMXXX                                                                11/21/2020 14:31:16 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE SIMXXX
+OBJECT MODULE PLACED IN ..\Output\SIMxxx.obj
+COMPILER INVOKED BY: D:\keilARM\C51\BIN\C51.EXE SIMxxx.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(..\Listing\SI
+                    -Mxxx.lst) TABS(2) OBJECT(..\Output\SIMxxx.obj)
+
+line level    source
+
+   1          #include "SIMxxx.h"
+   2          #include "lcd.h"
+   3          #include "delay.h"
+   4          
+   5          u8 SIM900_CSQ[4];
+   6          u8* sim900a_check_cmd(u8 *str)
+   7          {
+   8   1        char *strx=0;
+   9   1        if(USART1_RX_STA&0X8000)    //
+  10   1        { 
+  11   2          USART1_RX_BUF[USART1_RX_STA&0X7FFF]=0;//
+  12   2          strx=strstr((const char*)USART1_RX_BUF,(const char*)str);
+  13   2        } 
+  14   1        return (u8*)strx;
+  15   1      }
+  16          u8 sim900a_send_cmd(u8 *cmd,u8 *ack,u16 waittime)
+  17          { 
+  18   1        u8 res=0;
+  19   1        USART1_RX_STA=0;USART1_RX_REC_ATCOMMAD=1;
+  20   1        UART1_SendString(cmd);
+  21   1        if(ack&&waittime)   
+  22   1        {
+  23   2          while(--waittime) 
+  24   2          {
+  25   3            delay_ms(10);
+  26   3            if(USART1_RX_STA&0X8000)
+  27   3            {
+  28   4              if(sim900a_check_cmd(ack))break; 
+  29   4              USART1_RX_STA=0;
+  30   4            } 
+  31   3          }
+  32   2          if(waittime==0)res=1; 
+  33   2        }
+  34   1        USART1_RX_STA=0;USART1_RX_REC_ATCOMMAD=0;
+  35   1        return res;
+  36   1      }
+  37          u8 sim900a_work_test(void)
+  38          {
+  39   1        if(sim900a_send_cmd((u8 *)"AT\r\n",(u8 *)"OK",100))
+  40   1        {
+  41   2          if(sim900a_send_cmd((u8 *)"AT\r\n",(u8 *)"OK",100))return SIM_COMMUNTION_ERR; //通信不上
+  42   2        }   
+  43   1        if(sim900a_send_cmd((u8 *)"AT+CPIN?\r\n",(u8 *)"READY",400))return SIM_CPIN_ERR;  //没有SIM卡
+  44   1        if(sim900a_send_cmd((u8 *)"AT+CREG?\r\n",(u8 *)"0,1",400))
+  45   1        {
+  46   2          if(strstr((const char*)USART1_RX_BUF,"0,5")==NULL)
+  47   2          {
+  48   3             if(!sim900a_send_cmd((u8 *)"AT+CSQ\r\n",(u8 *)"OK",200)) 
+  49   3             {
+  50   4              memcpy(SIM900_CSQ,USART1_RX_BUF+15,2);
+  51   4             }
+  52   3             return SIM_CREG_FAIL;  //等待附着到网络
+  53   3          }
+  54   2        }
+C51 COMPILER V9.54   SIMXXX                                                                11/21/2020 14:31:16 PAGE 2   
+
+  55   1        return SIM_OK;
+  56   1      }
+  57          u8 SIM900A_CONNECT_SERVER()
+  58          {   
+  59   1      //  u8   dtbuf[50];
+  60   1        if(sim900a_send_cmd((u8 *)"AT+CGCLASS=\"B\"\r\n",(u8 *)"OK",500)) return 1;
+  61   1        xianshi_x_y(1,5,"1",1);
+  62   1        if(sim900a_send_cmd((u8 *)"AT+CGDCONT=1,\"IP\",\"CMNET\"\r\n",(u8 *)"OK",500))  return 7;
+  63   1        xianshi_x_y(1,5,"2",1);
+  64   1        if(sim900a_send_cmd((u8 *)"AT+CGATT=1\r\n",(u8 *)"OK",500)) return 2;
+  65   1        xianshi_x_y(1,5,"3",1);
+  66   1      //  if(sim900a_send_cmd((u8 *)"AT+CSTT\r\n",(u8 *)"OK",200))  return 3;
+  67   1      //  xianshi_x_y(1,5,"4",1);
+  68   1      //  if(sim900a_send_cmd((u8 *)"AT+CIICR\r\n",(u8 *)"OK",600)) return 4;
+  69   1      //  if(!sim900a_send_cmd((u8 *)"AT+CIFSR\r\n",(u8 *)"ERROR",200)) return 5;
+  70   1      //  if(sim900a_send_cmd((u8 *)"AT+CIPCSGP=1,\"CMNET\"\r\n",(u8 *)"OK",200)) return 4;
+  71   1      //  xianshi_x_y(1,5,"5",1);
+  72   1        if(sim900a_send_cmd((u8 *)"AT+CLPORT=\"TCP\",\"2000\"\r\n",(u8 *)"OK",200)) return 3;
+  73   1        xianshi_x_y(1,5,"6",1);
+  74   1      //  sprintf((char*)dtbuf,"AT+CIPSTART=\"TCP\",\"%s\",\"%s\"\r\n",IP_ADD,COM);
+  75   1        delay_ms(500);
+  76   1      //  if(sim900a_send_cmd((u8 *)dtbuf,(u8 *)"CONNECT OK",200))  return 6;   
+  77   1      //  if(sim900a_send_cmd((u8 *)dtbuf,(u8 *)"OK",200))  return 6; 
+  78   1          if(sim900a_send_cmd((u8 *)"AT+CIPSTART=\"TCP\",\"www.bigiot.net\",\"8181\"\r\n",(u8 *)"CONNECT OK",200))
+             -  return 6;  
+  79   1          xianshi_x_y(1,5,"7",1);
+  80   1          return 0;
+  81   1      }
+  82          u8 SIM900A_GPRS_SEND_DATA()
+  83          {   
+  84   1         u8 cmd_1[3];
+  85   1         //UART3SendString("启动数据发送，数据内容：",strlen("启动数据发送，数据内容："));  
+  86   1         if(sim900a_send_cmd("AT+CIPSEND\r\n",">",200))  return 1;
+  87   1            xianshi_x_y(1,5,"8",1);
+  88   1         //UART3SendString((u8*)temp_data,strlen((u8*)temp_data));  UART3SendString("\r\n",2);
+  89   1         if(sim900a_send_cmd((u8 *)"{\"M\":\"checkin\",\"ID\":\"19978\",\"K\":\"d8bb4cca4\"}\r\n",NULL,50)) retur
+             -n 2;
+  90   1            
+  91   1         cmd_1[0]=0x1a;cmd_1[1]=0;
+  92   1        xianshi_x_y(1,5,"9",1);
+  93   1         if(sim900a_send_cmd(cmd_1,(u8 *)"SEND OK",3000)) return 3;   
+  94   1      //  UART1_SendString(0x1A);
+  95   1          xianshi_x_y(1,5,"0",1);
+  96   1         //UART3SendString("数据发送成功",strlen("数据发送成功"));  UART3SendString("\r\n",2);
+  97   1         return 0;
+  98   1      }
+  99          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    695    ----
+   CONSTANT SIZE    =    277    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      4      15
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

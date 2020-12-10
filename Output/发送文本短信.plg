@@ -1,0 +1,35 @@
+<html>
+<body>
+<pre>
+<h1>礦ision Build Log</h1>
+<h2>Project:</h2>
+F:\TB\模块\information\SIM808资料包\new software\1---STC89系列单片机\10 TCP通信，通过域名地址,向指定服务器提交数据\Source\发送文本短信.uvproj
+Project File Date:  08/30/2016
+
+<h2>Output:</h2>
+Build target 'Target 1'
+compiling main.c...
+MAIN.C(48): error C141: syntax error near '2317'
+main.c(48): error C305: unterminated string/char const
+compiling SIMxxx.c...
+Target not created
+Build target 'Target 1'
+compiling main.c...
+linking...
+*** WARNING L15: MULTIPLE CALL TO SEGMENT
+    SEGMENT: ?PR?_STRSTR?STRSTR
+    CALLER1: ?PR?TIMER0_ISR?TIMER0
+    CALLER2: ?C_C51STARTUP
+Program Size: data=110.1 xdata=100 code=2891
+creating hex file from "..\Output\发送文本短信"...
+"..\Output\发送文本短信" - 0 Error(s), 1 Warning(s).
+Build target 'Target 1'
+compiling main.c...
+linking...
+*** WARNING L15: MULTIPLE CALL TO SEGMENT
+    SEGMENT: ?PR?_STRSTR?STRSTR
+    CALLER1: ?PR?TIMER0_ISR?TIMER0
+    CALLER2: ?C_C51STARTUP
+Program Size: data=110.1 xdata=100 code=2891
+creating hex file from "..\Output\发送文本短信"...
+"..\Output\发送文本短信" - 0 Error(s), 1 Warning(s).

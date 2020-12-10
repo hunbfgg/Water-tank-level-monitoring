@@ -1,0 +1,111 @@
+C51 COMPILER V9.54   UART                                                                  11/21/2020 14:25:50 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE UART
+OBJECT MODULE PLACED IN ..\Output\uart.obj
+COMPILER INVOKED BY: D:\keilARM\C51\BIN\C51.EXE uart.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(..\Listing\uart
+                    -.lst) TABS(2) OBJECT(..\Output\uart.obj)
+
+line level    source
+
+   1          #include "uart.h"
+   2          #include "timer0.h"
+   3          
+   4          u16 USART1_RX_STA=0;  
+   5          u8 USART1_RX_REC_ATCOMMAD;
+   6          u8 Flag_Rec_Call=0;
+   7          xdata u8 USART1_RX_BUF[USART1_MAX_RECV_LEN];        //
+   8          
+   9          void Uart1Init(void)    //9600bps@11.05926MHz
+  10          {
+  11   1        PCON &= 0x7F;   //
+  12   1        SCON = 0x50;    //
+  13   1        AUXR &= 0xBF;   //
+  14   1        AUXR &= 0xFE;   //
+  15   1        TMOD &= 0x0F;   //
+  16   1        TMOD |= 0x20;   //
+  17   1        TL1 = 0xFD;     //
+  18   1        TH1 = 0xFD;     //
+  19   1        ET1 = 0;        //
+  20   1        TR1 = 1;        //
+  21   1        ES=1;         //
+  22   1      }
+  23          /*----------------------------
+  24          UART1 发送串口数据
+  25          -----------------------------*/
+  26          void UART1_SendData(u8 dat)
+  27          {
+  28   1        ES=0;         //关串口中断
+  29   1        SBUF=dat;     
+  30   1        while(TI!=1); //等待发送成功
+  31   1        TI=0;         //清除发送中断标志
+  32   1        ES=1;         //开串口中断
+  33   1      }
+  34          /*----------------------------
+  35          UART1 发送字符串
+  36          -----------------------------*/
+  37          void UART1_SendString(char *s)
+  38          {
+  39   1        while(*s)//检测字符串结束符
+  40   1        {
+  41   2          UART1_SendData(*s++);//发送当前字符
+  42   2        }
+  43   1      }
+  44          ///*----------------------------
+  45          //UART1 发送字符串
+  46          //避免出现 软件报重复调用
+  47          //-----------------------------*/
+  48          //void UART1_SendString_other(char *s)
+  49          //{
+  50          //  while(*s)//检测字符串结束符
+  51          //  {
+  52          //    UART1_SendData(*s++);//发送当前字符
+  53          //  }
+  54          //}
+C51 COMPILER V9.54   UART                                                                  11/21/2020 14:25:50 PAGE 2   
+
+  55          /*******************************************************************************
+  56          * 函数名 : Uart1 
+  57          * 描述   : 串口1中断服务入口函数
+  58          * 输入   : 
+  59          * 输出   : 
+  60          * 返回   : 
+  61          * 注意   : 
+  62          ******************************/
+  63          void Uart1_INTER() interrupt 4
+  64          {
+  65   1        if (RI)
+  66   1          {
+  67   2            RI = 0;                 //清除RI位  
+  68   2          if(USART1_RX_STA<USART1_MAX_RECV_LEN)   //?1?éò??óê?êy?Y
+  69   2          {     
+  70   3          TIM_SetCounter();
+  71   3          if(USART1_RX_STA==0)  TR0=1;    //开启定时器
+  72   3          USART1_RX_BUF[USART1_RX_STA++]=SBUF;    //保存串口数据
+  73   3          }
+  74   2          else 
+  75   2          {
+  76   3          USART1_RX_STA|=1<<15;         //????±ê???óê?íê3é
+  77   3            } 
+  78   2          }
+  79   1          if (TI)
+  80   1          {
+  81   2              TI = 0;                 //清除TI位
+  82   2          }
+  83   1      }
+  84          
+  85          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    196    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =    100    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      4       3
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
